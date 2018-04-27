@@ -7,7 +7,7 @@ using static Nest.Infer;
 
 namespace Tests.QueryDsl.Geo.Shape.Polygon
 {
-	public class GeoShapePolygonQueryUsageTests : GeoShapeQueryUsageTestsBase
+	public class GeoShapePolygonQueryUsageTests : QueryDslUsageTestsBase
 	{
 		public GeoShapePolygonQueryUsageTests(ReadOnlyCluster i, EndpointUsage usage) : base(i, usage) { }
 
@@ -23,11 +23,23 @@ namespace Tests.QueryDsl.Geo.Shape.Polygon
 			}
 		};
 
-		protected override object ShapeJson => new
+		protected override object QueryJson => new
 		{
-			type = "polygon",
-			ignore_unmapped = true,
-			coordinates = this._coordinates
+			geo_shape = new
+			{
+				_name="named_query",
+				boost = 1.1,
+				ignore_unmapped = true,
+				location = new
+				{
+					relation = "intersects",
+					shape = new
+					{
+						type = "polygon",
+						coordinates = this._coordinates
+					}
+				}
+			}
 		};
 
 		protected override QueryContainer QueryInitializer => new GeoShapePolygonQuery
@@ -35,7 +47,8 @@ namespace Tests.QueryDsl.Geo.Shape.Polygon
 			Name = "named_query",
 			Boost = 1.1,
 			Field = Field<Project>(p => p.Location),
-			Shape = new PolygonGeoShape(this._coordinates) { IgnoreUnmapped = true},
+			Shape = new PolygonGeoShape(this._coordinates),
+			IgnoreUnmapped = true,
 			Relation = GeoShapeRelation.Intersects,
 		};
 
@@ -44,7 +57,8 @@ namespace Tests.QueryDsl.Geo.Shape.Polygon
 				.Name("named_query")
 				.Boost(1.1)
 				.Field(p => p.Location)
-				.Coordinates(this._coordinates, ignoreUnmapped: true)
+				.Coordinates(this._coordinates)
+				.IgnoreUnmapped()
 				.Relation(GeoShapeRelation.Intersects)
 			);
 
